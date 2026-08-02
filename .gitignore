@@ -22,3 +22,9 @@ src/*.uid
 /backup-install/
 /steam_appid.txt
 
+
+/bin*/
+/obj*/
+**/bin/
+**/obj/
+
