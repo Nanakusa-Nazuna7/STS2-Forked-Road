@@ -62,6 +62,8 @@ public struct ForkedRoadBatchLockedMessage : INetMessage
 
     public bool ShouldBroadcast => true;
 
+    public bool ShouldBuffer => true;
+
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
     public LogLevel LogLevel => LogLevel.Info;
@@ -108,6 +110,8 @@ public struct ForkedRoadBranchRoomPlanMessage : INetMessage
     public string? modelEntry;
 
     public bool ShouldBroadcast => true;
+
+    public bool ShouldBuffer => true;
 
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
@@ -165,6 +169,8 @@ public struct ForkedRoadBranchRoomEnteredMessage : INetMessage
 
     public bool ShouldBroadcast => true;
 
+    public bool ShouldBuffer => true;
+
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
     public LogLevel LogLevel => LogLevel.Info;
@@ -198,6 +204,8 @@ public struct ForkedRoadBranchRoomCompletedMessage : INetMessage
 
     public bool ShouldBroadcast => true;
 
+    public bool ShouldBuffer => true;
+
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
     public LogLevel LogLevel => LogLevel.Info;
@@ -228,6 +236,8 @@ public struct ForkedRoadPlayerEliminatedMessage : INetMessage
     public int? branchId;
 
     public bool ShouldBroadcast => true;
+
+    public bool ShouldBuffer => true;
 
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
@@ -279,6 +289,8 @@ public struct ForkedRoadBranchCombatSnapshotMessage : INetMessage
 
     public bool ShouldBroadcast => true;
 
+    public bool ShouldBuffer => true;
+
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
     public LogLevel LogLevel => LogLevel.VeryDebug;
@@ -329,6 +341,8 @@ public struct ForkedRoadBranchSpectatorStateMessage : INetMessage
     public int revision;
 
     public bool ShouldBroadcast => true;
+
+    public bool ShouldBuffer => true;
 
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
@@ -393,6 +407,8 @@ public struct ForkedRoadPlayerSpectateTargetChangedMessage : INetMessage
 
     public bool ShouldBroadcast => true;
 
+    public bool ShouldBuffer => true;
+
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
     public LogLevel LogLevel => LogLevel.Info;
@@ -430,6 +446,8 @@ public struct ForkedRoadBatchAllCompletedMessage : INetMessage
     public int batchId;
 
     public bool ShouldBroadcast => true;
+
+    public bool ShouldBuffer => true;
 
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
@@ -793,6 +811,8 @@ internal struct ForkedRoadSaveRestoreAvailabilityMessage : INetMessage
 
     public bool ShouldBroadcast => true;
 
+    public bool ShouldBuffer => true;
+
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
     public LogLevel LogLevel => LogLevel.Info;
@@ -813,6 +833,8 @@ internal struct ForkedRoadSaveRestoreStateMessage : INetMessage
     public ForkedRoadSavedRunSnapshot snapshot;
 
     public bool ShouldBroadcast => true;
+
+    public bool ShouldBuffer => true;
 
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
@@ -838,6 +860,8 @@ internal struct ForkedRoadSharedEventOptionChosenMessage : INetMessage
     public RunLocation location;
 
     public bool ShouldBroadcast => true;
+
+    public bool ShouldBuffer => true;
 
     public NetTransferMode Mode => NetTransferMode.Reliable;
 
