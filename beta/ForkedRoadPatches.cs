@@ -151,10 +151,10 @@ internal static class ForkedRoadPatches
         }
     }
 
-    [HarmonyPatch(typeof(RunManager), nameof(RunManager.SetUpSavedMultiPlayer))]
+    [HarmonyPatch(typeof(RunManager), nameof(RunManager.SetUpSavedMultiplayer))]
     private static class RunManager_SetUpSavedMultiPlayer_Patch
     {
-        private static void Prefix(LoadRunLobby lobby)
+        private static void Prefix(RunState state, LoadRunLobby lobby)
         {
             ForkedRoadManager.PrepareForSavedMultiplayerLoad(lobby.Run, lobby.NetService.Type, lobby.NetService);
         }
@@ -494,15 +494,6 @@ internal static class ForkedRoadPatches
         }
     }
 
-    [HarmonyPatch(typeof(MultiplayerScalingModel), nameof(MultiplayerScalingModel.ModifyPowerAmountGiven))]
-    private static class MultiplayerScalingModel_ModifyPowerAmountGiven_Patch
-    {
-        private static bool Prefix(PowerModel power, Creature giver, decimal amount, Creature? target, CardModel? cardSource, ref decimal __result)
-        {
-            return !ForkedRoadManager.TryOverrideLegacyMultiplayerPowerScaling(power, amount, target, ref __result);
-        }
-    }
-
     [HarmonyPatch(typeof(RunManager), nameof(RunManager.ProceedFromTerminalRewardsScreen))]
     private static class RunManager_ProceedFromTerminalRewardsScreen_Patch
     {
@@ -708,15 +699,6 @@ internal static class ForkedRoadPatches
     private static class RewardSynchronizer_HandleCardRemovedMessage_Patch
     {
         private static bool Prefix(MegaCrit.Sts2.Core.Multiplayer.Messages.Game.CardRemovedMessage message)
-        {
-            return !ForkedRoadManager.ShouldIgnoreRewardMessage(message.Location);
-        }
-    }
-
-    [HarmonyPatch(typeof(RewardSynchronizer), "HandlePaelsWingSacrifice")]
-    private static class RewardSynchronizer_HandlePaelsWingSacrifice_Patch
-    {
-        private static bool Prefix(MegaCrit.Sts2.Core.Multiplayer.Messages.Game.PaelsWingSacrificeMessage message)
         {
             return !ForkedRoadManager.ShouldIgnoreRewardMessage(message.Location);
         }

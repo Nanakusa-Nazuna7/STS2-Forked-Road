@@ -18,3 +18,13 @@ src/*.uid
 /ForkedRoad.csproj
 /ForkedRoad.Legacy.csproj
 /export_presets.cfg
+
+/backup-install/
+/steam_appid.txt
+
+
+/bin*/
+/obj*/
+**/bin/
+**/obj/
+

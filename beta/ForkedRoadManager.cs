@@ -166,8 +166,8 @@ internal static partial class ForkedRoadManager
     private static readonly System.Reflection.FieldInfo? EventModelOwnerBackingField =
         AccessTools.Field(typeof(EventModel), "<Owner>k__BackingField");
 
-    private static readonly System.Reflection.FieldInfo? MerchantRoomInventoryBackingField =
-        AccessTools.Field(typeof(MerchantRoom), "<Inventory>k__BackingField");
+    private static readonly System.Reflection.FieldInfo? MerchantRoomRunStateField =
+        AccessTools.Field(typeof(MerchantRoom), "_runState");
 
     private static readonly System.Reflection.FieldInfo PlayerChoiceSynchronizerReceivedChoicesField =
         AccessTools.Field(typeof(PlayerChoiceSynchronizer), "_receivedChoices");
@@ -318,6 +318,8 @@ internal static partial class ForkedRoadManager
 
         public IReadOnlyList<ModifierModel> Modifiers => _inner.Modifiers;
 
+        public IReadOnlyList<BadgeModel> BadgeModels => _inner.BadgeModels;
+
         public MultiplayerScalingModel? MultiplayerScalingModel => _inner.MultiplayerScalingModel;
 
         public IReadOnlyList<IReadOnlyList<MapPointHistoryEntry>> MapPointHistory => _inner.MapPointHistory;
@@ -381,7 +383,7 @@ internal static partial class ForkedRoadManager
             return _inner.GetHistoryEntryFor(location);
         }
 
-        public IEnumerable<AbstractModel> IterateHookListeners(CombatState? childCombatState)
+        public IEnumerable<AbstractModel> IterateHookListeners(ICombatState? childCombatState)
         {
             return _inner.IterateHookListeners(childCombatState);
         }
@@ -841,43 +843,6 @@ internal static partial class ForkedRoadManager
         }
 
         result = (decimal)playerCount * MultiplayerScalingModel.GetMultiplayerScaling(combatState.Encounter, combatState.RunState.CurrentActIndex);
-        return true;
-    }
-
-    internal static bool TryOverrideLegacyMultiplayerPowerScaling(PowerModel power, decimal amount, Creature? target, ref decimal result)
-    {
-        CombatState? combatState = CombatManager.Instance.DebugOnlyGetState();
-        if (combatState == null || !ShouldUseLegacyCombatPlayerCountForScaling(combatState))
-        {
-            return false;
-        }
-
-        if (target == null || (target != null && !target.IsPrimaryEnemy && !target.IsSecondaryEnemy))
-        {
-            result = amount;
-            return true;
-        }
-
-        if (!power.ShouldScaleInMultiplayer)
-        {
-            result = amount;
-            return true;
-        }
-
-        int playerCount = combatState.Players.Count;
-        if (playerCount <= 1)
-        {
-            result = amount;
-            return true;
-        }
-
-        if (power is ArtifactPower or SlipperyPower or PlatingPower or BufferPower)
-        {
-            result = (decimal)((playerCount - 1) * 2 + 1) * amount;
-            return true;
-        }
-
-        result = amount * (decimal)playerCount * MultiplayerScalingModel.GetMultiplayerScaling(combatState.Encounter, combatState.RunState.CurrentActIndex);
         return true;
     }
 
@@ -1871,7 +1836,7 @@ internal static partial class ForkedRoadManager
                 encounter.GenerateMonstersWithSlots(_runState);
             }
 
-            CombatState combatState = new(encounter, _runState, _runState.Modifiers, _runState.MultiplayerScalingModel);
+            CombatState combatState = new(encounter, _runState, _runState.Modifiers, _runState.BadgeModels, _runState.MultiplayerScalingModel);
             Dictionary<ulong, Player> roomPlayersByOriginalId = new();
             foreach (NetFullCombatState.PlayerState playerState in snapshot.Players)
             {
@@ -2664,7 +2629,19 @@ internal static partial class ForkedRoadManager
             Player localShopPlayer = CloneSpectatorPlayer(viewedPlayer, LocalContext.NetId.Value);
             MerchantInventory inventory = MerchantInventory.CreateForNormalMerchant(localShopPlayer);
             MerchantRoom roomModel = new();
-            MerchantRoomInventoryBackingField?.SetValue(roomModel, inventory);
+            MerchantRoomRunStateField?.SetValue(roomModel, _runState);
+            for (int i = 0; i < _runState.Players.Count; i++)
+            {
+                Player player = _runState.Players[i];
+                if (player.NetId == LocalContext.NetId.Value)
+                {
+                    roomModel.Inventories.Add(inventory);
+                }
+                else
+                {
+                    roomModel.Inventories.Add(MerchantInventory.CreateForNormalMerchant(CloneSpectatorPlayer(player, player.NetId)));
+                }
+            }
 
             List<Player> visualPlayers = new() { localShopPlayer };
             foreach (ulong playerId in branch.PlayerIds.Where(id => id != viewedPlayer.NetId))
