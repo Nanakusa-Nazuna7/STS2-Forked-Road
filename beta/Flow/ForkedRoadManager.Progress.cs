@@ -31,6 +31,16 @@ internal static partial class ForkedRoadManager
             return;
         }
 
+        // Room-finished sources (rest-site proceed, merchant leave, ...) can fire while the
+        // shared room that preceded the split is still closing — before the local player has
+        // actually entered their branch room. Completing the branch at that point strands the
+        // run at the pre-split location. A branch may only complete from inside its own room.
+        if (!branch.EnteredPlayerIds.Contains(localPlayerId))
+        {
+            Log.Info($"ForkedRoad ignored branch completion via {source}: local player has not entered branch {branch.BranchId} yet.");
+            return;
+        }
+
         ActivateLocalSpectatorState(branch.BranchId);
         RefreshUiState();
 
