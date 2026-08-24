@@ -321,6 +321,7 @@ internal static partial class ForkedRoadManager
                 }
 
                 player.IsEliminated = false;
+                player.ReviveFollowsTeammate = true;
             }
 
             player.CurrentBranchId = null;
@@ -337,6 +338,9 @@ internal static partial class ForkedRoadManager
         RestoreAllHookActivation();
         if (_netService?.Type == NetGameType.Host)
         {
+            // Align the vanilla save with the merged shared-map state, otherwise a quick
+            // reload can land everyone back in a stale mid-branch room.
+            TaskHelper.RunSafely(MegaCrit.Sts2.Core.Saves.SaveManager.Instance.SaveRun(null, saveProgress: false));
             if (HasDivergedPlayerLocations())
             {
                 CaptureSaveRestoreSnapshotForCurrentRun();

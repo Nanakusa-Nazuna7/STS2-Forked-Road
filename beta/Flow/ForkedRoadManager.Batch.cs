@@ -99,6 +99,41 @@ internal static partial class ForkedRoadManager
             branchOffset++;
         }
 
+        // Players revived from a death-clear batch reunite with a surviving teammate instead of
+        // immediately re-splitting onto their own route: merge branches that consist solely of
+        // revived followers into a branch that still has a non-revived member.
+        if (batch.BranchGroups.Count > 1)
+        {
+            List<BranchGroupRuntime> followOnlyBranches = batch.BranchGroups
+                .Where(branch => branch.PlayerIds.All(playerId =>
+                    Runtime.Players.TryGetValue(playerId, out PlayerBranchRuntime? runtimePlayer) &&
+                    runtimePlayer.ReviveFollowsTeammate))
+                .ToList();
+            foreach (BranchGroupRuntime followBranch in followOnlyBranches)
+            {
+                BranchGroupRuntime? targetBranch = batch.BranchGroups
+                    .Where(branch => branch != followBranch && branch.PlayerIds.Any(playerId =>
+                        Runtime.Players.TryGetValue(playerId, out PlayerBranchRuntime? runtimePlayer) &&
+                        !runtimePlayer.ReviveFollowsTeammate))
+                    .OrderBy(branch => branch.TargetCoord.row)
+                    .ThenBy(branch => branch.TargetCoord.col)
+                    .FirstOrDefault();
+                if (targetBranch == null)
+                {
+                    continue;
+                }
+
+                targetBranch.PlayerIds.AddRange(followBranch.PlayerIds);
+                batch.BranchGroups.Remove(followBranch);
+                Log.Info($"ForkedRoad merged revived followers into branch {targetBranch.BranchId} at {targetBranch.TargetCoord} to reunite them with a surviving teammate.");
+            }
+        }
+
+        foreach (PlayerBranchRuntime runtimePlayer in Runtime.Players.Values)
+        {
+            runtimePlayer.ReviveFollowsTeammate = false;
+        }
+
         IReadOnlyList<Player> eliminatedPlayers = _runState.Players.Where(player => IsPlayerEliminated(player.NetId)).ToList();
         foreach (Player eliminatedPlayer in eliminatedPlayers)
         {
