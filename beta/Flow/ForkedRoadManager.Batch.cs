@@ -109,15 +109,20 @@ internal static partial class ForkedRoadManager
                     Runtime.Players.TryGetValue(playerId, out PlayerBranchRuntime? runtimePlayer) &&
                     runtimePlayer.ReviveFollowsTeammate))
                 .ToList();
+            BranchGroupRuntime? survivorBranch = batch.BranchGroups
+                .Where(branch => branch.PlayerIds.Any(playerId =>
+                    Runtime.Players.TryGetValue(playerId, out PlayerBranchRuntime? runtimePlayer) &&
+                    !runtimePlayer.ReviveFollowsTeammate))
+                .OrderBy(branch => branch.TargetCoord.row)
+                .ThenBy(branch => branch.TargetCoord.col)
+                .FirstOrDefault();
             foreach (BranchGroupRuntime followBranch in followOnlyBranches)
             {
-                BranchGroupRuntime? targetBranch = batch.BranchGroups
-                    .Where(branch => branch != followBranch && branch.PlayerIds.Any(playerId =>
-                        Runtime.Players.TryGetValue(playerId, out PlayerBranchRuntime? runtimePlayer) &&
-                        !runtimePlayer.ReviveFollowsTeammate))
-                    .OrderBy(branch => branch.TargetCoord.row)
-                    .ThenBy(branch => branch.TargetCoord.col)
-                    .FirstOrDefault();
+                // Prefer a branch that still has a survivor; if every branch is revive-only
+                // (the whole party died and was revived), reunite the revived players into one
+                // of the remaining branches.
+                BranchGroupRuntime? targetBranch = survivorBranch ?? followOnlyBranches
+                    .FirstOrDefault(candidate => candidate != followBranch && batch.BranchGroups.Contains(candidate));
                 if (targetBranch == null)
                 {
                     continue;
@@ -125,7 +130,7 @@ internal static partial class ForkedRoadManager
 
                 targetBranch.PlayerIds.AddRange(followBranch.PlayerIds);
                 batch.BranchGroups.Remove(followBranch);
-                Log.Info($"ForkedRoad merged revived followers into branch {targetBranch.BranchId} at {targetBranch.TargetCoord} to reunite them with a surviving teammate.");
+                Log.Info($"ForkedRoad merged revived followers into branch {targetBranch.BranchId} at {targetBranch.TargetCoord} to reunite the party.");
             }
         }
 

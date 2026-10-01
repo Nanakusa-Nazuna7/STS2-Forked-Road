@@ -333,6 +333,18 @@ internal static partial class ForkedRoadManager
         Runtime.Spectators.Clear();
         Runtime.ActiveBatch = null;
         ClearSeededSplitLocations();
+
+        // The batch is resolved: nobody is mid-branch anymore. Unify the tracked player
+        // locations with the host's current coordinate — the one the vanilla save is about to
+        // persist — so no stale branch-coord divergence survives into the save or into a
+        // quick-reload snapshot (which would otherwise restore a player into an already
+        // completed branch room).
+        var resolvedSharedCoord = _runState?.CurrentMapCoord;
+        foreach (PlayerBranchRuntime resolvedPlayer in Runtime.Players.Values)
+        {
+            resolvedPlayer.SelectionCoord = resolvedSharedCoord;
+        }
+
         SeedMapVoteLocationsIfNeeded();
         Runtime.Phase = RouteSplitRunPhase.SharedMapSelection;
         RestoreAllHookActivation();
